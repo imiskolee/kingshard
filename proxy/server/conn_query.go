@@ -34,7 +34,7 @@ import (
 var useDatabaseRegex *regexp.Regexp
 
 func init() {
-	useDatabaseRegex = regexp.MustCompile("(use `(?:.*?)`;)'")
+		useDatabaseRegex = regexp.MustCompile("(USE `(?:.*?)`;)'")
 }
 
 /*处理query语句*/
