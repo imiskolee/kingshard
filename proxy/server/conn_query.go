@@ -16,6 +16,7 @@ package server
 
 import (
 	"fmt"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -29,6 +30,12 @@ import (
 	"github.com/flike/kingshard/proxy/router"
 	"github.com/flike/kingshard/sqlparser"
 )
+
+var jsonBinaryRegex *regexp.Regexp
+
+func init() {
+	jsonBinaryRegex = regexp.MustCompile(`(_binary)'[{|\[](.*?)[\}\]]'`)
+}
 
 /*处理query语句*/
 func (c *ClientConn) handleQuery(sql string) (err error) {
@@ -52,6 +59,11 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 	}()
 
 	sql = strings.TrimRight(sql, ";") //删除sql语句最后的分号
+
+	//hack tidb syncer json data, beacuse it always use _binary for json.
+	sql = strings.Replace(sql,`_binary'{`,`_utf8'{`,-1)
+	sql = strings.Replace(sql,`_binary'[`,`_utf8'[`,-1)
+
 	hasHandled, err := c.preHandleShard(sql)
 	if err != nil {
 		golog.Error("server", "preHandleShard", err.Error(), 0,
