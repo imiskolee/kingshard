@@ -69,8 +69,8 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 	//hack tidb syncer json data, beacuse it always use _binary for json.
 	sql = strings.Replace(sql,`_binary'{`,`_utf8'{`,-1)
 	sql = strings.Replace(sql,`_binary'[`,`_utf8'[`,-1)
-
-
+	sql = strings.Replace(sql,`_binary'null`,`_utf8'null`,-1)
+	sql = strings.Replace(sql,`_binary'"`,`_utf8'"`,-1)
 
 	hasHandled, err := c.preHandleShard(sql)
 	if err != nil {
