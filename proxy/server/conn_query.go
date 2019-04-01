@@ -15,6 +15,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"runtime"
@@ -32,9 +33,12 @@ import (
 )
 
 var useDatabaseRegex *regexp.Regexp
+var binaryCharset *regexp.Regexp
 
 func init() {
 		useDatabaseRegex = regexp.MustCompile("(USE `(?:.*?)`;)")
+		binaryCharset = regexp.MustCompile(`_binary'(\w)+'`)
+
 }
 
 /*处理query语句*/
@@ -70,8 +74,19 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 	sql = strings.Replace(sql,`_binary'{`,`_utf8'{`,-1)
 	sql = strings.Replace(sql,`_binary'[`,`_utf8'[`,-1)
 	sql = strings.Replace(sql,`_binary'null`,`_utf8'null`,-1)
-	sql = strings.Replace(sql,`_binary'"`,`_utf8'"`,-1)
 
+	matched := binaryCharset.FindAllStringSubmatch(sql,-1)
+	for _,match := range matched {
+		if len(matched) != 2 {
+			continue
+		}
+		var d interface{}
+		if err := json.Unmarshal([]byte(match[1]),&d); err == nil {
+			m := strings.Replace(match[0],"_binary","_utf8",-1)
+			sql = strings.Replace(sql,match[0],m,-1)
+		}
+	}
+	
 	hasHandled, err := c.preHandleShard(sql)
 	if err != nil {
 		golog.Error("server", "preHandleShard", err.Error(), 0,
