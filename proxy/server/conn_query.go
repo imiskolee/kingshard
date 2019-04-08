@@ -34,9 +34,11 @@ import (
 
 var useDatabaseRegex *regexp.Regexp
 var binaryCharset *regexp.Regexp
+var alterTable *regexp.Regexp
 
 func init() {
-		useDatabaseRegex = regexp.MustCompile("(USE `(?:.*?)`;)")
+		useDatabaseRegex = regexp.MustCompile("USE `(.*?)`;")
+		alterTable = regexp.MustCompile("ALTER TABLE `(.*?)`")
 		binaryCharset = regexp.MustCompile(`_binary'(\w)+'`)
 
 }
@@ -65,9 +67,19 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 	sql = strings.TrimRight(sql, ";") //删除sql语句最后的分号
 
 	//hack tidb syncer ddl, skip use `database`;
-	useStagements := useDatabaseRegex.FindAllString(sql,-1)
+	useStagements := useDatabaseRegex.FindAllStringSubmatch(sql,-1)
 	if len(useStagements) == 1 {
-		sql = strings.Replace(sql,useStagements[0],``,-1)
+		if len(useStagements[0]) == 2 {
+			sql = strings.Replace(sql,useStagements[0][0],``,-1)
+			matched := alterTable.FindAllStringSubmatch(sql,-1)
+			fmt.Println(matched)
+			for _,match := range matched {
+				if len(match) != 2 {
+					continue
+				}
+				sql = strings.Replace(sql, match[0],fmt.Sprintf("ALTER TABLE `%s`.`%s`",useStagements[0][1],match[1]),-1)
+			}
+		}
 	}
 
 	//hack tidb syncer json data, beacuse it always use _binary for json.
@@ -86,7 +98,7 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 			sql = strings.Replace(sql,match[0],m,-1)
 		}
 	}
-	
+
 	hasHandled, err := c.preHandleShard(sql)
 	if err != nil {
 		golog.Error("server", "preHandleShard", err.Error(), 0,
