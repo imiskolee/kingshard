@@ -77,6 +77,9 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 				if len(match) != 2 {
 					continue
 				}
+				if strings.Index(match[0],useStagements[0][1]) > 0 {
+					continue
+				}
 				sql = strings.Replace(sql, match[0],fmt.Sprintf("ALTER TABLE `%s`.`%s`",useStagements[0][1],match[1]),-1)
 			}
 		}
