@@ -241,9 +241,6 @@ func (db *DB) tryReuse(co *Conn) error {
 	var err error
 
 	err = co.Ping()
-
-	err =  errors.ErrBadConn
-	
 	if err != nil {
 		db.closeConn(co)
 		co, err = db.newConn()
@@ -387,6 +384,9 @@ type BackendConn struct {
 }
 
 func (p *BackendConn) Close() {
+	p.db.closeConn(p.Conn)
+	p.Conn = nil
+	return
 	if p != nil && p.Conn != nil {
 		if p.Conn.pkgErr != nil {
 			p.db.closeConn(p.Conn)
