@@ -241,6 +241,9 @@ func (db *DB) tryReuse(co *Conn) error {
 	var err error
 
 	err = co.Ping()
+
+	err =  errors.ErrBadConn
+	
 	if err != nil {
 		db.closeConn(co)
 		co, err = db.newConn()

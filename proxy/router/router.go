@@ -542,30 +542,13 @@ func (r *Router) rewriteSelectSql(plan *Plan, node *sqlparser.Select, tableIndex
 	for _, expr := range node.SelectExprs {
 		switch v := expr.(type) {
 		case *sqlparser.StarExpr:
-			//for shardTable.*,need replace table into shardTable_xxxx.
-			if string(v.TableName) == plan.Rule.Table {
-				fmt.Fprintf(buf, "%s%s_%04d.*",
-					prefix,
-					plan.Rule.Table,
-					tableIndex,
-				)
-			} else {
-				buf.Fprintf("%s%v", prefix, expr)
-			}
+			buf.Fprintf("%s%v", prefix, expr)
+			break
 		case *sqlparser.NonStarExpr:
 			//rewrite shardTable.column as a
 			//into shardTable_xxxx.column as a
 			if colName, ok := v.Expr.(*sqlparser.ColName); ok {
-				if string(colName.Qualifier) == plan.Rule.Table {
-					fmt.Fprintf(buf, "%s%s_%04d.%s",
-						prefix,
-						plan.Rule.Table,
-						tableIndex,
-						string(colName.Name),
-					)
-				} else {
-					buf.Fprintf("%s%v", prefix, colName)
-				}
+				buf.Fprintf("%s%v", prefix, colName)
 				//if expr has as
 				if v.As != nil {
 					buf.Fprintf(" as %s", v.As)
@@ -589,35 +572,30 @@ func (r *Router) rewriteSelectSql(plan *Plan, node *sqlparser.Select, tableIndex
 	switch v := (node.From[0]).(type) {
 	case *sqlparser.AliasedTableExpr:
 		if len(v.As) != 0 {
-			fmt.Fprintf(buf, "%s_%04d as %s",
+			fmt.Fprintf(buf, "%s as %s",
 				sqlparser.String(v.Expr),
-				tableIndex,
 				string(v.As),
 			)
 		} else {
-			fmt.Fprintf(buf, "%s_%04d",
+			fmt.Fprintf(buf, "%s",
 				sqlparser.String(v.Expr),
-				tableIndex,
 			)
 		}
 	case *sqlparser.JoinTableExpr:
 		if ate, ok := (v.LeftExpr).(*sqlparser.AliasedTableExpr); ok {
 			if len(ate.As) != 0 {
-				fmt.Fprintf(buf, "%s_%04d as %s",
+				fmt.Fprintf(buf, "%s as %s",
 					sqlparser.String(ate.Expr),
-					tableIndex,
 					string(ate.As),
 				)
 			} else {
-				fmt.Fprintf(buf, "%s_%04d",
+				fmt.Fprintf(buf, "%s",
 					sqlparser.String(ate.Expr),
-					tableIndex,
 				)
 			}
 		} else {
-			fmt.Fprintf(buf, "%s_%04d",
+			fmt.Fprintf(buf, "%s",
 				sqlparser.String(v.LeftExpr),
-				tableIndex,
 			)
 		}
 		buf.Fprintf(" %s %v", v.Join, v.RightExpr)
@@ -625,9 +603,8 @@ func (r *Router) rewriteSelectSql(plan *Plan, node *sqlparser.Select, tableIndex
 			buf.Fprintf(" on %v", v.On)
 		}
 	default:
-		fmt.Fprintf(buf, "%s_%04d",
+		fmt.Fprintf(buf, "%s",
 			sqlparser.String(node.From[0]),
-			tableIndex,
 		)
 	}
 	//append other tables
@@ -752,7 +729,6 @@ func (r *Router) generateUpdateSql(plan *Plan, stmt sqlparser.Statement) error {
 				node.Comments,
 				node.Table,
 			)
-			fmt.Fprintf(buf, "_%04d", plan.RouteTableIndexs[i])
 			buf.Fprintf(" set %v%v%v%v",
 				node.Exprs,
 				node.Where,
@@ -795,7 +771,6 @@ func (r *Router) generateDeleteSql(plan *Plan, stmt sqlparser.Statement) error {
 				node.Comments,
 				node.Table,
 			)
-			fmt.Fprintf(buf, "_%04d", plan.RouteTableIndexs[i])
 			buf.Fprintf("%v%v%v",
 				node.Where,
 				node.OrderBy,
@@ -835,13 +810,11 @@ func (r *Router) generateReplaceSql(plan *Plan, stmt sqlparser.Statement) error 
 			tableIndex := plan.RouteTableIndexs[i]
 			nodeIndex := plan.Rule.TableToNode[tableIndex]
 			nodeName := r.Nodes[nodeIndex]
-
 			buf := sqlparser.NewTrackedBuffer(nil)
 			buf.Fprintf("replace %vinto %v",
 				node.Comments,
 				node.Table,
 			)
-			fmt.Fprintf(buf, "_%04d", plan.RouteTableIndexs[i])
 			buf.Fprintf("%v %v",
 				node.Columns,
 				plan.Rows[tableIndex],
@@ -881,7 +854,6 @@ func (r *Router) generateTruncateSql(plan *Plan, stmt sqlparser.Statement) error
 				node.TableOpt,
 				node.Table,
 			)
-			fmt.Fprintf(buf, "_%04d", plan.RouteTableIndexs[i])
 			tableIndex := plan.RouteTableIndexs[i]
 			nodeIndex := plan.Rule.TableToNode[tableIndex]
 			nodeName := r.Nodes[nodeIndex]
