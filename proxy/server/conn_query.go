@@ -38,9 +38,8 @@ var alterTable *regexp.Regexp
 
 func init() {
 		useDatabaseRegex = regexp.MustCompile("USE `(.*?)`;")
-		alterTable = regexp.MustCompile("ALTER TABLE `(.*?)`")
+		alterTable = regexp.MustCompile("(?:(?:ALTER)|(?:CREATE)) TABLE `(.*?)`")
 		binaryCharset = regexp.MustCompile(`_binary'(\w)+'`)
-
 }
 
 /*处理query语句*/
