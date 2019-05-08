@@ -37,7 +37,7 @@ var binaryCharset *regexp.Regexp
 var alterTable *regexp.Regexp
 
 func init() {
-	useDatabaseRegex = regexp.MustCompile("(?i)USE(?:\\s+)(.*?)(?:\\s+);")
+	useDatabaseRegex = regexp.MustCompile("(?i)USE(?:\\s+)(.*?)(?:\\s{0,});")
 	alterTable = regexp.MustCompile("(?i)((?:ALTER)|(?:CREATE))(?:\\s+)TABLE(?:\\s+)(.*?)")
 	binaryCharset = regexp.MustCompile(`_binary'(\w)+'`)
 }
