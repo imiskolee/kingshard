@@ -38,7 +38,7 @@ var alterTable *regexp.Regexp
 
 func init() {
 	useDatabaseRegex = regexp.MustCompile("(?i)USE(?:\\s+)(.*?)(?:\\s+);")
-	alterTable = regexp.MustCompile("(?i)(?:(?:ALTER)|(?:CREATE))(?:\\s+)TABLE(?:\\s+)(.*?)")
+	alterTable = regexp.MustCompile("(?i)((?:ALTER)|(?:CREATE))(?:\\s+)TABLE(?:\\s+)(.*?)")
 	binaryCharset = regexp.MustCompile(`_binary'(\w)+'`)
 }
 
@@ -72,17 +72,13 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 			sql = strings.Replace(sql,useStagements[0][0],``,-1)
 			matched := alterTable.FindAllStringSubmatch(sql,-1)
 			for _,match := range matched {
-				if len(match) != 2 {
+				if len(match) != 3 {
 					continue
 				}
 				if strings.Index(match[0],useStagements[0][1]) > 0 {
 					continue
 				}
-				prefix := "ALTER"
-				if strings.Contains(sql,"CREATE TABLE") {
-					prefix = "CREATE"
-				}
-				sql = strings.Replace(sql, match[0],fmt.Sprintf("%s TABLE %s.%s",prefix,useStagements[0][1],match[1]),-1)
+				sql = strings.Replace(sql, match[0],fmt.Sprintf("%s TABLE %s.%s",match[1],useStagements[0][1],match[2]),-1)
 			}
 		}
 		fmt.Println("Rewrite DDL:",sql)
