@@ -75,11 +75,11 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 				if len(match) != 3 {
 					continue
 				}
-				if strings.Index(match[0],useStagements[0][1]) >=  0 {
-					continue
+				var tname = match[2]
+				if strings.Index(match[0],useStagements[0][1]) < 0 {
+					tname = fmt.Sprintf("%s.%s",useStagements[0][1],tname)
 				}
-
-				sql = strings.Replace(sql, match[0],fmt.Sprintf("%s TABLE %s.%s",match[1],useStagements[0][1],match[2]),-1)
+				sql = strings.Replace(sql, match[0],fmt.Sprintf("%s TABLE %s",match[1],tname),-1)
 			}
 		}
 		fmt.Println("Rewrite DDL:",sql)
