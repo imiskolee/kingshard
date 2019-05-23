@@ -75,9 +75,10 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 				if len(match) != 3 {
 					continue
 				}
-				if strings.Index(match[0],useStagements[0][1]) > 0 {
+				if strings.Index(match[0],useStagements[0][1]) >=  0 {
 					continue
 				}
+
 				sql = strings.Replace(sql, match[0],fmt.Sprintf("%s TABLE %s.%s",match[1],useStagements[0][1],match[2]),-1)
 			}
 		}
