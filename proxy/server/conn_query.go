@@ -17,7 +17,6 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"regexp"
 	"runtime"
 	"strings"
@@ -76,7 +75,7 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 				if len(match) != 3 {
 					continue
 				}
-				log.Println("Origial Table:",match[2],match[0],useStagements[0][1])
+				fmt.Println("Origial Table:",match[2],match[0],useStagements[0][1])
 				var tname = match[2]
 				if !strings.Contains(tname,useStagements[0][1])  {
 					tname = fmt.Sprintf("%s.%s",useStagements[0][1],tname)
