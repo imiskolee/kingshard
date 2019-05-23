@@ -78,7 +78,7 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 				fmt.Println("Origial Table:",match[2],match[0],useStagements[0][1])
 				var tname = match[2]
 				if !strings.Contains(tname,useStagements[0][1])  {
-					tname = fmt.Sprintf("%s.%s",useStagements[0][1],tname)
+					//tname = fmt.Sprintf("%s.%s",useStagements[0][1],tname)
 				}
 				sql = strings.Replace(sql, match[0],fmt.Sprintf("%s TABLE %s",match[1],tname),-1)
 			}
