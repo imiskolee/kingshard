@@ -22,7 +22,7 @@ func TestRewriteSQL(t *testing.T) {
 	}
 
 	{
-		sql := "use `aa`; alter table `aab`.`b` add column c char(255)"
+		sql := "    use `aa`; alter table `aab`.`b` add column c char(255)"
 		sql = conn.rewriteSql(sql)
 		fmt.Println(sql)
 	}

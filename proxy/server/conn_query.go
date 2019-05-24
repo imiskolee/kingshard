@@ -37,7 +37,7 @@ var binaryCharset *regexp.Regexp
 var alterTable *regexp.Regexp
 
 func init() {
-	useDatabaseRegex = regexp.MustCompile("(?i)USE(?:\\s+)(.*?)(?:\\s{0,});")
+	useDatabaseRegex = regexp.MustCompile("(?i)^(?:\\s+)?USE(?:\\s+)(.*?)(?:\\s{0,});")
 	alterTable = regexp.MustCompile("(?i)((?:ALTER)|(?:CREATE))(?:\\s+)TABLE(?:\\s+)([A-Za-z0-9_\\-\\.\\`]+)")
 	binaryCharset = regexp.MustCompile(`_binary'(\w)+'`)
 }
@@ -71,8 +71,6 @@ func (c *ClientConn) rewriteSql(sql string) string {
 	sql = strings.Replace(sql,`_binary'null`,`_utf8'null`,-1)
 	sql = strings.Replace(sql,`_binary''`,`_utf8''`,-1)
 
-	fmt.Println("Rewrite DML:",sql)
-
 	matched := binaryCharset.FindAllStringSubmatch(sql,-1)
 	for _,match := range matched {
 		if len(matched) != 2 {
@@ -84,8 +82,6 @@ func (c *ClientConn) rewriteSql(sql string) string {
 			sql = strings.Replace(sql,match[0],m,-1)
 		}
 	}
-
-	fmt.Println("Rewrite DML:",sql)
 
 
 	return sql
