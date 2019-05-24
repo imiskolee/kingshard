@@ -38,31 +38,11 @@ var alterTable *regexp.Regexp
 
 func init() {
 	useDatabaseRegex = regexp.MustCompile("(?i)USE(?:\\s+)(.*?)(?:\\s{0,});")
-	alterTable = regexp.MustCompile("(?i)((?:ALTER)|(?:CREATE))(?:\\s+)TABLE(?:\\s+)(.*?)")
+	alterTable = regexp.MustCompile("(?i)((?:ALTER)|(?:CREATE))(?:\\s+)TABLE(?:\\s+)([A-Za-z0-9_\\-\\.\\`]+)")
 	binaryCharset = regexp.MustCompile(`_binary'(\w)+'`)
 }
 
-/*处理query语句*/
-func (c *ClientConn) handleQuery(sql string) (err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			golog.OutputSql("Error", "err:%v,sql:%s", e, sql)
-
-			if err, ok := e.(error); ok {
-				const size = 4096
-				buf := make([]byte, size)
-				buf = buf[:runtime.Stack(buf, false)]
-
-				golog.Error("ClientConn", "handleQuery",
-					err.Error(), 0,
-					"stack", string(buf), "sql", sql)
-			}
-
-			err = errors.ErrInternalServer
-			return
-		}
-	}()
-
+func (c *ClientConn) rewriteSql(sql string) string {
 	sql = strings.TrimRight(sql, ";") //删除sql语句最后的分号
 
 	//hack tidb syncer ddl, skip use `database`;
@@ -75,10 +55,9 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 				if len(match) != 3 {
 					continue
 				}
-				fmt.Println("Origial Table:",match[2],match[0],useStagements[0][1])
 				var tname = match[2]
-				if !strings.Contains(tname,useStagements[0][1])  {
-					//tname = fmt.Sprintf("%s.%s",useStagements[0][1],tname)
+				if !strings.Contains(tname,".") {
+					tname = fmt.Sprintf("%s.%s",useStagements[0][1],tname)
 				}
 				sql = strings.Replace(sql, match[0],fmt.Sprintf("%s TABLE %s",match[1],tname),-1)
 			}
@@ -104,7 +83,32 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 		}
 	}
 
+	return sql
+}
 
+
+/*处理query语句*/
+func (c *ClientConn) handleQuery(sql string) (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			golog.OutputSql("Error", "err:%v,sql:%s", e, sql)
+
+			if err, ok := e.(error); ok {
+				const size = 4096
+				buf := make([]byte, size)
+				buf = buf[:runtime.Stack(buf, false)]
+
+				golog.Error("ClientConn", "handleQuery",
+					err.Error(), 0,
+					"stack", string(buf), "sql", sql)
+			}
+
+			err = errors.ErrInternalServer
+			return
+		}
+	}()
+
+	sql = c.rewriteSql(sql)
 
 	hasHandled, err := c.preHandleShard(sql)
 	if err != nil {
