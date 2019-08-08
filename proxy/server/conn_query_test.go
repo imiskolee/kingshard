@@ -33,5 +33,17 @@ func TestRewriteSQL(t *testing.T) {
 		fmt.Println(sql)
 	}
 
+	{
+		sql := "USE `bindo_gateway`; CREATE UNIQUE INDEX `index_name` ON `t1` (`uuid`);"
+		sql = conn.rewriteSql(sql)
+		fmt.Println(sql)
+	}
+
+	{
+		sql := "USE `bindo_gateway`; CREATE INDEX `index_name2` ON `t2` (`uuid`);"
+		sql = conn.rewriteSql(sql)
+		fmt.Println(sql)
+	}
+
 }
 

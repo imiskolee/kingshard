@@ -35,10 +35,12 @@ import (
 var useDatabaseRegex *regexp.Regexp
 var binaryCharset *regexp.Regexp
 var alterTable *regexp.Regexp
+var createIndex *regexp.Regexp
 
 func init() {
 	useDatabaseRegex = regexp.MustCompile("(?i)^(?:\\s+)?USE(?:\\s+)(.*?)(?:\\s{0,});")
 	alterTable = regexp.MustCompile("(?i)((?:ALTER)|(?:CREATE))(?:\\s+)TABLE(?:\\s+)([A-Za-z0-9_\\-\\.\\`]+)")
+	createIndex = regexp.MustCompile("(?:)((?:CREATE(\\s+)(?:UNIQUE)?(\\s+)?INDEX))(?:\\s+)([A-Za-z0-9_\\-\\.\\`]+)(?:\\s+)ON(?:\\s+)([A-Za-z0-9_\\-\\.\\`]+)")
 	binaryCharset = regexp.MustCompile(`_binary'(\w)+'`)
 }
 
@@ -51,6 +53,10 @@ func (c *ClientConn) rewriteSql(sql string) string {
 		if len(useStagements[0]) == 2 {
 			sql = strings.Replace(sql,useStagements[0][0],``,-1)
 			matched := alterTable.FindAllStringSubmatch(sql,-1)
+			indexes := createIndex.FindAllStringSubmatch(sql,-1)
+
+			m := false
+
 			for _,match := range matched {
 				if len(match) != 3 {
 					continue
@@ -60,6 +66,19 @@ func (c *ClientConn) rewriteSql(sql string) string {
 					tname = fmt.Sprintf("%s.%s",useStagements[0][1],tname)
 				}
 				sql = strings.Replace(sql, match[0],fmt.Sprintf("%s TABLE %s",match[1],tname),-1)
+				m = true
+			}
+
+			if !m {
+				for _,indexs := range indexes {
+					if len(indexs) == 6 {
+						var tname = indexs[5]
+						if !strings.Contains(tname,".") {
+							tname = fmt.Sprintf("%s.%s",useStagements[0][1],tname)
+						}
+						sql = strings.Replace(sql, indexs[5],tname,-1)
+					}
+				}
 			}
 		}
 		fmt.Println("Rewrite DDL:",sql)
