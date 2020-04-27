@@ -90,7 +90,7 @@ func (c *ClientConn) rewriteSql(sql string) string {
 	sql = strings.Replace(sql,`_binary'null`,`_utf8'null`,-1)
 	sql = strings.Replace(sql,`_binary''`,`_utf8''`,-1)
 	sql = strings.Replace(sql,`_binary'"`,`_utf8'"`,-1)
-
+	sql = strings.Replace(sql,`_binary'\"`,`_utf8'\"`,-1)
 	matched := binaryCharset.FindAllStringSubmatch(sql,-1)
 	for _,match := range matched {
 		if len(matched) != 2 {
