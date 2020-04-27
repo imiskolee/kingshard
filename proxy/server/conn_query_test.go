@@ -40,7 +40,7 @@ func TestRewriteSQL(t *testing.T) {
 	}
 
 	{
-		sql := "USE `bindo_gateway`; CREATE INDEX `index_name2` ON `t2` (`uuid`);"
+		sql := "USE `bindo`; CREATE TABLE devices_tmp LIKE devices;"
 		sql = conn.rewriteSql(sql)
 		fmt.Println(sql)
 	}
