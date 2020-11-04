@@ -46,7 +46,7 @@ func init() {
 
 func (c *ClientConn) rewriteSql(sql string) string {
 	sql = strings.TrimRight(sql, ";") //删除sql语句最后的分号
-
+	oldSQL := sql
 	//hack tidb syncer ddl, skip use `database`;
 	useStagements := useDatabaseRegex.FindAllStringSubmatch(sql,-1)
 	if len(useStagements) == 1 {
@@ -83,7 +83,7 @@ func (c *ClientConn) rewriteSql(sql string) string {
 		}
 		fmt.Println("Rewrite DDL:",sql)
 	}
-	oldSQL := sql
+
 	//hack tidb syncer json data, beacuse it always use _binary for json.
 	sql = strings.Replace(sql,`_binary''`,`null`,-1)
 	sql = strings.Replace(sql,`_binary'{`,`_utf8'{`,-1)
