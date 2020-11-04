@@ -46,7 +46,6 @@ func init() {
 
 func (c *ClientConn) rewriteSql(sql string) string {
 	sql = strings.TrimRight(sql, ";") //删除sql语句最后的分号
-	oldSQL := sql
 	//hack tidb syncer ddl, skip use `database`;
 	useStagements := useDatabaseRegex.FindAllStringSubmatch(sql,-1)
 	if len(useStagements) == 1 {
@@ -112,6 +111,7 @@ func (c *ClientConn) rewriteSql(sql string) string {
 
 /*处理query语句*/
 func (c *ClientConn) handleQuery(sql string) (err error) {
+	oldSQL := sql
 	defer func() {
 		if e := recover(); e != nil {
 			golog.OutputSql("Error", "err:%v,sql:%s before:%s", e, sql,oldSQL)
@@ -137,6 +137,7 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 	if err != nil {
 		golog.Error("server", "preHandleShard", err.Error(), 0,
 			"sql", sql,
+			  "oldSQL",oldSQL,  
 			"hasHandled", hasHandled,
 		)
 		return err
