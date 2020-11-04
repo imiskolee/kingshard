@@ -83,6 +83,7 @@ func (c *ClientConn) rewriteSql(sql string) string {
 		}
 		fmt.Println("Rewrite DDL:",sql)
 	}
+	oldSQL := sql
 	//hack tidb syncer json data, beacuse it always use _binary for json.
 	sql = strings.Replace(sql,`_binary''`,`null`,-1)
 	sql = strings.Replace(sql,`_binary'{`,`_utf8'{`,-1)
@@ -113,7 +114,7 @@ func (c *ClientConn) rewriteSql(sql string) string {
 func (c *ClientConn) handleQuery(sql string) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
-			golog.OutputSql("Error", "err:%v,sql:%s", e, sql)
+			golog.OutputSql("Error", "err:%v,sql:%s before:%s", e, sql,oldSQL)
 
 			if err, ok := e.(error); ok {
 				const size = 4096
