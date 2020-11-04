@@ -83,7 +83,7 @@ func (c *ClientConn) rewriteSql(sql string) string {
 		}
 		fmt.Println("Rewrite DDL:",sql)
 	}
-
+	fmt.Println("Rewrite DDL:",sql)
 	//hack tidb syncer json data, beacuse it always use _binary for json.
 	sql = strings.Replace(sql,`_binary'{`,`_utf8'{`,-1)
 	sql = strings.Replace(sql,`_binary'[`,`_utf8'[`,-1)
